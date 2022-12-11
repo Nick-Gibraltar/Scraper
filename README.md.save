@@ -1,0 +1,25 @@
+
+# Scraper
+AI Core Project 3 - Data Collection Pipeline
+
+The purpose of the Data Collection Pipeline project is to automate the collection of data from a chosen website.
+
+In this case, the website of Screwfix, the home improvement supplies company was chosen.
+
+This choice was made for two reasons: first, that it contains a lot of data suitable for collection; and second, because it's a website
+that I use frequently and any search tools that I develop may be of actual use to me.
+
+The code defines a Scraper class with multiple methods that define a logical sequence for the collection of data from the site.
+
+In sequence, the methods are as follows:
+
+open_url: to open the specified website, in this case www.screwfix.com
+cookies_check: to check whether the website is requiring cookies to be accepted and to accept them if so.
+initial_search: to enter a desired search term into the search bar.
+get_subcategory_list: certain broad search terms don't give individual products as the result but instead take the user to
+a second page with sub-categories into which the initial search term can fall. For example, a search for "power tools" will
+yield a page showing categories suchs as drills, saws, drivers etc. This method will return a list containing these sub-categories,
+if they exist, or an empty list if not.
+get_subcategory_choice: if the search resulted in sub-categories then this method will advise the user of this fact and prompt
+for a choice of sub-category to be made.
+
