@@ -9,20 +9,20 @@ import time
 
 
 class Scraper:
-'''
-Downloads and stores product specifications from www.screwfix.com
-for user's chosen search term.
+    """
+    Downloads and stores product specifications from www.screwfix.com
+    for user's chosen search term.
 
-Methods:
-    open_url: opens the www.screwfix.com home page
-    cookies_check: checks if cookies need to be accepted to proceed
-    initial_search: searches for the user's specified search item
-    get_sub_category_list: determine if search term yields further categories
-    get_sub_category_choice: ask user to choose a sub-category if they have arisen
-    get_product_links: get urls for individual products
-    get_product_features_table: retrieve product specifications from product urls
-    transform_product_table: generate csv summary of data using consistent field names
-'''
+    Methods:
+        open_url: opens the www.screwfix.com home page
+        cookies_check: checks if cookies need to be accepted to proceed
+        initial_search: searches for the user's specified search item
+        get_sub_category_list: determine if search term yields further categories
+        get_sub_category_choice: ask user to choose a sub-category if they have arisen
+        get_product_links: get urls for individual products
+        get_product_features_table: retrieve product specifications from product urls
+        transform_product_table: generate csv summary of data using consistent field names
+    """
     
     def __init__(self):
         self.url = "https://www.screwfix.com"
@@ -32,53 +32,56 @@ Methods:
         self.product_features_table = []
     
     def open_url(self):
-    '''
-    Open the specified url, www.screwfix.com
-    '''
+        '''
+        Open the specified url, www.screwfix.com
+        '''
         self.driver.get(self.url)
     
     def cookies_check(self):
-    '''
-    Check if the home page reeuires cookies to be accpepted by searching for
-    the text Accept Cookies. Click the Accept Cookies button if so.
+        '''
+        Check if the home page requires cookies to be accpepted by searching for
+        the text Accept Cookies. Click the Accept Cookies button if so.
 
-    Args:
-        None
+        Args:
+            None
 
-    Returns:
-        Void
-    '''
-        accept_cookies = self.driver.find_element(by=By.XPATH, value='//a[text()="Accept Cookies"]')
-        print("Found!")
+        Returns:
+            Void
+        '''
+        iframes = self.driver.find_element(by=By.XPATH, value='//iframe')
+        self.driver.switch_to.frame(iframes)
+        cookies_button=self.driver.find_element(by=By.XPATH, value='.//a[@class="call"]')
+        cookies_button.send_keys("")
+        cookies_button.send_keys(Keys.ENTER)
 
     def initial_search(self, search_item):
-    '''
-    Searches for the user's specified search term by finding the search box
-    and entering the search term into it
+        '''
+        Searches for the user's specified search term by finding the search box
+        and entering the search term into it
 
-    Args:
-        search_item: str: the item to be searched for
+        Args:
+            search_item: str: the item to be searched for
 
-    Returns:
-        Void
-    '''
+        Returns:
+            Void
+        '''
 
         search_bar = self.driver.find_element(by=By.XPATH, value='//*[@id="keyword-search"]')
         search_bar.send_keys(search_item)
         search_bar.send_keys(Keys.RETURN)
 
     def get_sub_category_list(self):
-    '''
-    Some search items navigate to a page showing further product categories rather
-    than individual products. The page html will contain n ln__cats if this is the case.
-    In this event, retrieve these category names and the urls associated with each of them.
+        '''
+        Some search items navigate to a page showing further product categories rather
+        than individual products. The page html will contain n ln__cats if this is the case.
+        In this event, retrieve these category names and the urls associated with each of them.
 
-    Args:
-        None
+        Args:
+            None
 
-    Returns:
-        Void 
-    '''
+        Returns:
+            Void 
+        '''
         try:
             
             sub_category_top_webelement = self.driver.find_element(by=By.XPATH, value='//ul[@class="n ln__cats"]')
@@ -92,10 +95,10 @@ Methods:
         self.sub_category_list = list(zip(sub_category_individual_names_list, sub_category_individual_links_list))
 
     def get_sub_category_choice(self):
-    '''
-    If sub-categories were detected, then display them to the user and
-    request the user's choice from them
-    '''
+        '''
+        If sub-categories were detected, then display them to the user and
+        request the user's choice from them
+        '''
         if not self.sub_category_list:
             return
         else:
@@ -107,35 +110,35 @@ Methods:
             self.driver.get(self.sub_category_list[int(sub_category_choice)][1])
 
     def get_product_links(self):
-    '''
-    Having arrived at a page of products, either directly from the initial
-    search or via a category page, extract urls for each individual product
-    
-    Args:
-        None
-    
-    Returns:
-        Void
-    '''
+        '''
+        Having arrived at a page of products, either directly from the initial
+        search or via a category page, extract urls for each individual product
+        
+        Args:
+            None
+        
+        Returns:
+            Void
+        '''
         # Get links to individual products 
         product_links_webelement = self.driver.find_element(By.XPATH, value='//div[@class="row flex-container"]')
         product_links_individual_webelements = product_links_webelement.find_elements(By.XPATH, value='.//div[@class="lii__product-details"]')
         self.product_links_list = [i.find_element(By.XPATH, value='.//a').get_attribute('href') for i in product_links_individual_webelements]
     
     def get_product_features_table(self):
-    '''
-    Iterates through the list of individual product urls navigating to each page in turn.
-    On arrival at at a specific page, select the Specifications tab which contains the
-    product data displayed as a table showing the product data field names and the value
-    of that field for the product in question. Extract the data into a list.
-    Then donwload individual product image files.
+        '''
+        Iterates through the list of individual product urls navigating to each page in turn.
+        On arrival at at a specific page, select the Specifications tab which contains the
+        product data displayed as a table showing the product data field names and the value
+        of that field for the product in question. Extract the data into a list.
+        Then donwload individual product image files.
 
-    Args:
-        None
+        Args:
+            None
 
-    Returns:
-        Void
-    '''
+        Returns:
+            Void
+        '''
     
         headers={"User-Agent":"Chrome/107.0.5304.110"}
         file_date = str(datetime.datetime.today)
@@ -171,17 +174,17 @@ Methods:
                 print(product_image_link)   
 
     def transform_product_table(self):
-    '''
-    Takes list of product data and transforms it so as to contain consistent field names
-    for each product within the list.
-    Then outputs the list to a csv file
+        '''
+        Takes list of product data and transforms it so as to contain consistent field names
+        for each product within the list.
+        Then outputs the list to a csv file
 
-    Args:
-        None
+        Args:
+            None
 
-    Returns:
-        Void
-    '''
+        Returns:
+            Void
+        '''
 
         product_features_set = set()
         product_names_set = set()
@@ -227,7 +230,7 @@ def main():
     scraper = Scraper()
     scraper.open_url()
     time.sleep(10)
-    #scraper.cookies_check()
+    scraper.cookies_check()
     #time.sleep(10)
     scraper.initial_search("drill")
     time.sleep(10)
