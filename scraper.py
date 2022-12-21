@@ -3,10 +3,10 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 import csv
-import requests
 import datetime
+import json
+import requests
 import time
-
 
 class Scraper:
     """
@@ -30,6 +30,8 @@ class Scraper:
         self.sub_category_list = []
         self.product_links_list = []
         self.product_features_table = []
+        self.product_features_dictionary = {}
+        self.output_path = "/home/nick/Documents/AICore/Data-Collection/Scraper/raw_data/"
     
     def open_url(self):
         '''
@@ -50,6 +52,7 @@ class Scraper:
         '''
         iframes = self.driver.find_element(by=By.XPATH, value='//iframe')
         self.driver.switch_to.frame(iframes)
+        time.sleep(1)
         cookies_button=self.driver.find_element(by=By.XPATH, value='.//a[@class="call"]')
         cookies_button.send_keys("")
         cookies_button.send_keys(Keys.ENTER)
@@ -83,11 +86,11 @@ class Scraper:
             Void 
         '''
         try:
-            
             sub_category_top_webelement = self.driver.find_element(by=By.XPATH, value='//ul[@class="n ln__cats"]')
         except:
             return
 
+        print("Sub-categories detected")
         sub_category_individual_name_webelements = sub_category_top_webelement.find_elements(By.XPATH, value='.//span[@class="ln__facet"]')
         sub_category_individual_names_list = [i.text for i in sub_category_individual_name_webelements]
         sub_category_individual_link_webelements = sub_category_top_webelement.find_elements(By.XPATH, value='.//a')
@@ -103,8 +106,8 @@ class Scraper:
             return
         else:
             print("Your search term gave multiple sub-categories as a result.")
-            for i,j in enumerate(self.sub_category_list):
-                print(j+": ",i)
+            for i in self.sub_category_list:
+                print(i)
             #TODO: error checking for user's input
             sub_category_choice = input("Please select from them to continue")
             self.driver.get(self.sub_category_list[int(sub_category_choice)][1])
@@ -141,8 +144,8 @@ class Scraper:
         '''
     
         headers={"User-Agent":"Chrome/107.0.5304.110"}
-        file_date = str(datetime.datetime.today)
-
+        file_date = str(datetime.datetime.today())
+        
         for i in self.product_links_list:
             self.driver.get(i)
             time.sleep(10)
@@ -152,32 +155,41 @@ class Scraper:
             time.sleep(1)
             
             product_name=self.driver.find_element(By.XPATH,value='//h1[@id="product_description"]').text
-
+            
             product_price_webelement=self.driver.find_element(By.XPATH,value='//input[contains(@id,"analytics_prodPrice_")]')
             product_features_items_webelement_list=self.driver.find_elements(By.XPATH,value='//td[contains(@id,"product_selling_attribute_name")]')
             product_features_values_webelement_list=self.driver.find_elements(By.XPATH,value='//td[contains(@id,"product_selling_attribute_value")]')
 
+            product_features_inner_dictionary={}
             self.product_features_table.append([product_name,"Price",product_price_webelement.get_attribute('value')])
             for i, j in zip(product_features_items_webelement_list, product_features_values_webelement_list):
                 self.product_features_table.append([product_name, i.text, j.text])
+                product_features_inner_dictionary[i.text]=j.text
+
+            product_features_inner_dictionary["Price"]=product_price_webelement.get_attribute('value')
+            self.product_features_dictionary[product_name]=product_features_inner_dictionary
 
             product_image_link=self.driver.find_element(By.XPATH,value='//img[@id="product_image_0"]').get_attribute('src')
             product_code = product_name[product_name.rfind("(")+1:product_name.rfind(")")]
 
             response=requests.get(product_image_link,headers=headers)
-            file_name="/home/nick/Documents/AICore/Data-Collection/Scraper/raw_data/"+file_date+"_"+product_code+".jpg"
+            file_name=self.output_path+file_date+"_"+product_code+".jpg"
             if response.status_code==200:
                 with open(file_name, "wb") as f:
                     f.write(response.content)
             else:
                 print("Image download failed. Response code: "+response.status_code)
-                print(product_image_link)   
+                print(product_image_link)
+
+    def export_json(self):
+        with open(self.output_path+"product-features-data.json", "w") as f:
+            json.dump(self.product_features_dictionary, f)
 
     def transform_product_table(self):
         '''
         Takes list of product data and transforms it so as to contain consistent field names
         for each product within the list.
-        Then outputs the list to a csv file
+        Then outputs the list to a csv file and creates individual json files
 
         Args:
             None
@@ -218,7 +230,7 @@ class Scraper:
             rows.append(new_row)
         product_features_list.insert(0,"")
 
-        with open("scraped-data.json", "w") as f:
+        with open("/home/nick/Documents/AICore/Data-Collection/Scraper/raw_data/scraped-data.csv", "w") as f:
             write = csv.writer(f)
             write.writerow(product_features_list)
             write.writerows(rows)
@@ -231,8 +243,8 @@ def main():
     scraper.open_url()
     time.sleep(10)
     scraper.cookies_check()
-    #time.sleep(10)
-    scraper.initial_search("drill")
+    time.sleep(10)
+    scraper.initial_search("packers")
     time.sleep(10)
     scraper.get_sub_category_list()
     time.sleep(10)
@@ -241,6 +253,7 @@ def main():
     scraper.get_product_links()
     time.sleep(10)
     scraper.get_product_features_table()
+    scraper.export_json()
     scraper.transform_product_table()
 
 if __name__=='__main__':
