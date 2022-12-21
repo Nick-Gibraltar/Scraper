@@ -68,7 +68,7 @@ class Scraper:
         Returns:
             Void
         '''
-
+        
         search_bar = self.driver.find_element(by=By.XPATH, value='//*[@id="keyword-search"]')
         search_bar.send_keys(search_item)
         search_bar.send_keys(Keys.RETURN)
@@ -188,8 +188,11 @@ class Scraper:
     def transform_product_table(self):
         '''
         Takes list of product data and transforms it so as to contain consistent field names
-        for each product within the list.
-        Then outputs the list to a csv file and creates individual json files
+        for each product within the list. Then outputs the list to a csv file.
+        Uses set property of uniqueness to create complete set of product features
+        and names without duplication. The product_features_table is first transformed into
+        two sets which are then read back into the product_features_list and product_names_list 
+
 
         Args:
             None
@@ -207,13 +210,15 @@ class Scraper:
         for i in self.product_features_table:
             product_names_set.add(i[0])
 
-        product_features_list = []
-        for i in product_features_set:
-            product_features_list.append(i)
+        product_features_list = list(product_features_set)
+        product_names_list=list(product_names_set)
         
-        product_names_list = []
-        for i  in product_names_set:
-            product_names_list.append(i)
+        #REMOVE if the previous 2 lines work
+        #for i in product_features_set:
+        #   product_features_list.append(i)
+        #product_names_list = []
+        #for i  in product_names_set:
+        #    product_names_list.append(i)
 
         rows = []
         for i in product_names_list:
@@ -230,13 +235,10 @@ class Scraper:
             rows.append(new_row)
         product_features_list.insert(0,"")
 
-        with open("/home/nick/Documents/AICore/Data-Collection/Scraper/raw_data/scraped-data.csv", "w") as f:
+        with open(self.output_path+"scraped-data.csv", "w") as f:
             write = csv.writer(f)
             write.writerow(product_features_list)
             write.writerows(rows)
-        
-
-        
 
 def main():                                                                   
     scraper = Scraper()
