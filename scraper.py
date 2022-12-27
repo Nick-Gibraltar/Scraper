@@ -1,4 +1,3 @@
-from selenium.webdriver.chrome.service import Service
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -133,7 +132,9 @@ class Scraper:
         product_links_webelement = self.driver.find_element(By.XPATH, value='//div[@class="row flex-container"]')
         product_links_individual_webelements = product_links_webelement.find_elements(By.XPATH, value='.//div[@class="lii__product-details"]')
         self.product_links_list = [i.find_element(By.XPATH, value='.//a').get_attribute('href') for i in product_links_individual_webelements]
-    
+
+        return self.product_links_list
+
     def get_product_features_table(self):
         '''
         Iterates through the list of individual product urls navigating to each page in turn.
@@ -181,7 +182,7 @@ class Scraper:
             response=requests.get(product_image_link,headers=headers)
             file_name=self.output_path+file_date+"_"+product_code+".jpg"
             if response.status_code==200:
-                with open(file_name, "w") as f:
+                with open(file_name, "wb") as f:
                     f.write(response.content)
             else:
                 print("Image download failed. Response code: "+response.status_code)
@@ -238,7 +239,3 @@ class Scraper:
             write = csv.writer(f)
             write.writerow(product_features_list)
             write.writerows(rows)
-
-
-
-

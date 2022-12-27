@@ -13,4 +13,4 @@ def main(search_term):
     data_collect.transform_product_table()
 
 if __name__=='__main__':
-    main("packers")
+    main("nails")
