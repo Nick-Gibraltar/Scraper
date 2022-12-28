@@ -39,6 +39,8 @@ class Scraper:
         Open the specified url, www.screwfix.com
         '''
         self.driver.get(self.url)
+
+        return self.driver.current_url
     
     def cookies_check(self):
         '''
@@ -51,11 +53,11 @@ class Scraper:
         Returns:
             Void
         '''
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//iframe')))
+        WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//iframe')))
         iframes = self.driver.find_element(by=By.XPATH, value='//iframe')
         self.driver.switch_to.frame(iframes)
         
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, './/a[@class="call"]')))
+        WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, './/a[@class="call"]')))
         cookies_button=self.driver.find_element(by=By.XPATH, value='.//a[@class="call"]')
         cookies_button.send_keys("")
         cookies_button.send_keys(Keys.ENTER)
@@ -71,10 +73,14 @@ class Scraper:
         Returns:
             Void
         '''
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="keyword-search"]')))
+        WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//*[@id="keyword-search"]')))
         search_bar = self.driver.find_element(by=By.XPATH, value='//*[@id="keyword-search"]')
         search_bar.send_keys(search_item)
         search_bar.send_keys(Keys.RETURN)
+
+        return_value=self.driver.current_url
+        print(return_value)
+        return return_value
 
     def get_sub_category_list(self):
         '''
@@ -89,10 +95,10 @@ class Scraper:
             Void 
         '''
         try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//ul[@class="n ln__cats"]')))
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//ul[@class="n ln__cats"]')))
             sub_category_top_webelement = self.driver.find_element(by=By.XPATH, value='//ul[@class="n ln__cats"]')
         except:
-            return
+            return self.sub_category_list
 
         print("Sub-categories detected")
         sub_category_individual_name_webelements = sub_category_top_webelement.find_elements(By.XPATH, value='.//span[@class="ln__facet"]')
@@ -100,6 +106,8 @@ class Scraper:
         sub_category_individual_link_webelements = sub_category_top_webelement.find_elements(By.XPATH, value='.//a')
         sub_category_individual_links_list = [i.get_attribute('href') for i in sub_category_individual_link_webelements]
         self.sub_category_list = list(zip(sub_category_individual_names_list, sub_category_individual_links_list))
+
+        return self.sub_category_list
 
     def get_sub_category_choice(self):
         '''
@@ -128,12 +136,12 @@ class Scraper:
             Void
         '''
         # Get links to individual products 
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//div[@class="row flex-container"]')))
+        WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//div[@class="row flex-container"]')))
         product_links_webelement = self.driver.find_element(By.XPATH, value='//div[@class="row flex-container"]')
         product_links_individual_webelements = product_links_webelement.find_elements(By.XPATH, value='.//div[@class="lii__product-details"]')
         self.product_links_list = [i.find_element(By.XPATH, value='.//a').get_attribute('href') for i in product_links_individual_webelements]
 
-        return self.product_links_list
+        return set(self.product_links_list)
 
     def get_product_features_table(self):
         '''
@@ -155,12 +163,12 @@ class Scraper:
         
         for i in self.product_links_list:
             self.driver.get(i)
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//a[@href="#product_additional_details_container"]')))
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//a[@href="#product_additional_details_container"]')))
             specifications_tab=self.driver.find_element(By.XPATH, value='//a[@href="#product_additional_details_container"]')
             specifications_tab.send_keys("")
             specifications_tab.send_keys(Keys.ENTER)
             
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="product_description"]')))
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.XPATH, '//h1[@id="product_description"]')))
             product_name=self.driver.find_element(By.XPATH,value='//h1[@id="product_description"]').text
             
             product_price_webelement=self.driver.find_element(By.XPATH,value='//input[contains(@id,"analytics_prodPrice_")]')
